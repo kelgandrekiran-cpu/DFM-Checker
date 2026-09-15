@@ -1,0 +1,36 @@
+name: Vendor browser CAD libraries
+
+on:
+  push:
+    paths:
+      - '.github/workflows/vendor-libs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Download pinned browser dependencies
+        run: |
+          npm install --no-save three@0.169.0 occt-import-js@0.0.23
+          mkdir -p libs
+          cp node_modules/three/build/three.module.js libs/three.module.js
+          cp node_modules/three/examples/jsm/controls/OrbitControls.js libs/OrbitControls.js
+          cp node_modules/occt-import-js/dist/occt-import-js.js libs/occt-import-js.js
+          cp node_modules/occt-import-js/dist/occt-import-js.wasm libs/occt-import-js.wasm
+          ls -lh libs
+      - name: Commit vendored libraries
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add libs
+          git diff --cached --quiet && exit 0
+          git commit -m 'Vendor browser CAD libraries for V3.1'
+          git push
